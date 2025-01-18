@@ -78,7 +78,7 @@ If you see logs like the following, either the USB isn't plugged in, it's dead, 
 Unable to stat /dev/disk/by-label/luksKey
 Nothing to read on input.
 ```
-
+or
 ```
 cryptsetup failed, password or options?
 ```
