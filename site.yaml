@@ -1,0 +1,5 @@
+- name: Bootstrap
+  hosts: all
+  become: true
+  roles:
+    - rmb938.bootstrap

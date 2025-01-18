@@ -1,0 +1,6 @@
+---
+roles:
+  - name: rmb938.bootstrap
+    src: https://github.com/rmb938/ansible-bootstrap-role.git
+    version: main
+    scm: git
