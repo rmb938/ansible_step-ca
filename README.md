@@ -55,7 +55,9 @@ Make sure Ubuntu is installed with Full Disk Encryption with a password.
 
     # Setup crypttab for initramfs
     # Ubuntu Noble doesnt officially support dracut with systemd crypttab yet
+    # Use manpage for Debian https://manpages.debian.org/testing/cryptsetup/crypttab.5.en.html
     # See: https://discourse.ubuntu.com/t/please-try-out-dracut/48975
+    # Once dracut is supported switch to https://www.freedesktop.org/software/systemd/man/latest/crypttab.html
     # Keyscript passdev doesnt ask for a password, it will just retry forever
     # If the usb dies, see troubleshooting section
     echo "dm_crypt-0 UUID=$(blkid -o value ${BOOT_PARTITION} | head -n1) /dev/disk/by-label/luksKey:/keyfile:5 luks,discard,keyscript=passdev,initramfs" | sudo tee /etc/crypttab
