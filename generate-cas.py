@@ -1,20 +1,15 @@
 #!/usr/bin/env python3
 
-from yubikit.piv import (
-    PivSession,
-    SLOT,
-    DEFAULT_MANAGEMENT_KEY,
-)
-from ykman import scripting as s
+import datetime
 
+import click
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
-from cryptography.x509.oid import NameOID, ExtendedKeyUsageOID
 from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
+from ykman import scripting as s
 from yubikit.core.smartcard import ApduError
-
-import datetime
-import click
+from yubikit.piv import DEFAULT_MANAGEMENT_KEY, SLOT, PivSession
 
 
 def generate_root_certificate() -> tuple[x509.Certificate, ec.EllipticCurvePrivateKey]:

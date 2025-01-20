@@ -1,11 +1,10 @@
 import datetime
+
 import PyKCS11
 from cryptography import x509
+from cryptography.hazmat.primitives import _serialization, hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives import _serialization
-from cryptography.x509.oid import NameOID, ExtendedKeyUsageOID
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives import serialization
+from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
 
 
 class YubiKeyECPrivateKey(ec.EllipticCurvePrivateKey):
