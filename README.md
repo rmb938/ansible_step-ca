@@ -66,6 +66,7 @@ Make sure Ubuntu is installed with Full Disk Encryption with a password.
     # Disable systemd luks generate by adding luks.crypttab=no
     sudo sed -i -e 's/GRUB_CMDLINE_LINUX_DEFAULT=""/GRUB_CMDLINE_LINUX_DEFAULT="luks.crypttab=no"/g' /etc/default/grub
     sudo update-grub
+    sudo reboot
     ```
 
 #### Troubleshooting
@@ -94,8 +95,8 @@ cryptsetup failed, password or options?
 
 Once booted you can remove the old USB Key.
 
-1. List the key slots `cryptsetup luksDump /dev/sda3`
-1. Remove the slot that is dead `cryptsetup -v luksKillSlot /dev/sda3 ${SLOT_NUM}`
+1. List the key slots `sudo cryptsetup luksDump /dev/sda3`
+1. Remove the slot that is dead `sudo cryptsetup -v luksKillSlot /dev/sda3 ${SLOT_NUM}`
     * **Important:** Read the output before entering your password to make sure you selected the correct one.
 1. Follow the above [Full Disk Encryption via USB Key](#full-disk-encryption-via-usb-key) steps to create a new key on a new USB drive.
 
