@@ -263,10 +263,9 @@ def main():
     print(f"Connected to Root Yubikey with Serial {yubikey.info.serial}")
 
     # Unlock with the user pin
-    # key = click.prompt(
-    #     "Enter management key", default=DEFAULT_MANAGEMENT_KEY.hex(), hide_input=True
-    # )
-    root_user_pin = DEFAULT_USER_PIN
+    root_user_pin = click.prompt(
+        "Enter user pin", default=DEFAULT_USER_PIN, hide_input=True
+    )
     ybi_key = YubiKeyECPrivateKey(yubikey.info.serial, root_user_pin)
 
     intermediate_certificate, intermediate_private_key = (
@@ -276,15 +275,14 @@ def main():
     yubikey, serials = next_yubikey(serials)
 
     # Unlock with the management key
-    # key = click.prompt(
-    #     "Enter management key", default=DEFAULT_MANAGEMENT_KEY.hex(), hide_input=True
-    # )
-    intermediate_pin = DEFAULT_MANAGEMENT_KEY.hex()
+    intermediate_management_pin = click.prompt(
+        "Enter management key", default=DEFAULT_MANAGEMENT_KEY.hex(), hide_input=True
+    )
     write_keys(
         yubikey,
         intermediate_certificate,
         intermediate_private_key,
-        intermediate_pin,
+        intermediate_management_pin,
     )
 
 
