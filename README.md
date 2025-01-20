@@ -103,15 +103,46 @@ Once booted you can remove the old USB Key.
 
 Need 3 yubikeys total, 2 for the roots (one as a backup) and one for the intermediate
 
-#### Install Yubikey Manager
-
-1. Install Step CLI
-    ```bash
-    sudo apt install yubikey-manager
-    ```
-
 #### Generate Certificates
 
-The following steps should be performed while the computer is not plugged into a network. This minimizes any risk of key compromise.
+1. Install the required packages
+    ```bash
+    sudo apt install yubikey-manager TODO:
+    ```
 
-TODO: yubikey can generate CA's directly on the device but need to do it via raw python.
+##### Root Certificate
+
+1. Copy the `generate-root.py` script to the server
+    ```bash
+    TODO:
+    ```
+1. Disconnect the server from the network
+1. Change the management, user pins, and PUK pins.
+    ```bash
+    TODO:
+    ```
+1. Write the management, user pins, and PUK pins down and keep them in a safe place
+1. Generate the root
+    ```bash
+    /usr/bin/python3 generate-root.py
+    ```
+1. Keep the Root Yubikeys and Pins in a safe place
+
+##### Intermediate Certificate
+
+1. Copy the `generate-intermediate.py` script to the server
+    ```bash
+    TODO:
+    ```
+1. Disconnect the server from the network
+1. Change the management, user, and PUK PINs, store them on the filesystem for Step CA
+    ```bash
+    TODO:
+    ```
+1. Insert one of the Yubikeys with the root keys
+1. Generate the intermediate
+    ```bash
+    /usr/bin/python3 generate-intermediate.py
+    ```
+1. Put the root Yubikey back in a safe place
+1. Plug the system back into the network
