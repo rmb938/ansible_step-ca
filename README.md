@@ -20,6 +20,13 @@ and [Ubuntu Server for Arm - 24.04](https://ubuntu.com/download/server/arm) inst
     echo "127.0.1.1 step-ca.us-homelab1.hl.rmb938.me" | sudo tee -a /etc/hosts
     ```
 
+* Update Packages
+    ```bash
+    sudo apt update
+    sudo apt upgrade
+    sudo reboot
+    ```
+
 * Tailscale installed and configured for ssh
     ```bash
     curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/noble.noarmor.gpg | sudo tee /usr/share/keyrings/tailscale-archive-keyring.gpg >/dev/null
@@ -144,3 +151,25 @@ Need 3 yubikeys total, 2 for the roots (one as a backup) and one for the interme
 1. Unplug Root Yubikey and reboot to clear any memory of the keys
 1. Put the root Yubikey back in a safe place
 1. Plug the system back into the network
+
+### Yubikey Lost/Corrupted
+
+#### Root
+
+If your root Yubikey is lost, consider your PKI compromised, you'll need to secure your environment start over.
+
+If your root Yubikey is corrupted you cannot copy your keys from your backup to another Yubikey due to how they work. If you are using a HSM you may be able to clone it.
+
+You will want to generate a new Root and intermediate then cross-sign the new intermediate with your old Root. Then deploy the cross-signed intermediate to your PKI infra 
+until you can distribute the new Root public keys to all users. Once the new Root is distributed, update your PKI infra to use the non-cross signed intermediate.
+
+TODO: create guide for cross signing, updating step-ca, ect...
+
+#### Intermediate
+
+If your intermediate is lost or corrupted simply following [Intermediate Certificate](#intermediate-certificate) steps to generate a new intermediate and rerun this ansible.
+
+You will also want to update your CRL to revoke the current intermediate if it was lost.
+    ```bash
+    TODO:
+    ```
