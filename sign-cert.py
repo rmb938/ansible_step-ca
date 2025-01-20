@@ -1,178 +1,188 @@
-from yubikit.piv import (
-    PivSession,
-    SLOT,
-    KEY_TYPE,
-    DEFAULT_MANAGEMENT_KEY,
-)
-from ykman import scripting as s
-
-from cryptography import x509
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.x509.oid import NameOID, ExtendedKeyUsageOID
-from cryptography.hazmat.primitives.asymmetric import ec
-from yubikit.core.smartcard import ApduError
-
 import datetime
-import click
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import padding
-from cryptography.x509 import CertificateSigningRequestBuilder
-from cryptography.x509.extensions import Extension, SubjectAlternativeName, DNSName
-from cryptography import x509
 import PyKCS11
 from cryptography import x509
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives import _serialization
+from cryptography.x509.oid import NameOID, ExtendedKeyUsageOID
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import serialization
 
-from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
-import binascii
-from OpenSSL import crypto
-import hashlib
-from pyasn1.type import univ, char, namedtype, tag, useful
-from pyasn1.codec.der import encoder, decoder
+
+class YubiKeyECPrivateKey(ec.EllipticCurvePrivateKey):
+    def __init__(self):
+        self._pkcs11_lib = PyKCS11.PyKCS11Lib()
+        self._pkcs11_lib.load("/usr/lib64/libykcs11.so.2")
+
+    def exchange(
+        self, algorithm: ec.ECDH, peer_public_key: ec.EllipticCurvePublicKey
+    ) -> bytes:
+        raise NotImplementedError()
+
+    def public_key(self) -> ec.EllipticCurvePublicKey:
+        """
+        The EllipticCurvePublicKey for this private key.
+        """
+        return self.certificate.public_key()
+
+    @property
+    def certificate(self) -> x509.Certificate:
+        slot = self._pkcs11_lib.getSlotList(tokenPresent=True)[0]
+
+        session = self._pkcs11_lib.openSession(
+            slot, PyKCS11.CKF_SERIAL_SESSION | PyKCS11.CKF_RW_SESSION
+        )
+
+        objs = session.findObjects(
+            [
+                (PyKCS11.CKA_CLASS, PyKCS11.CKO_CERTIFICATE),
+                (PyKCS11.CKA_ID, bytes.fromhex("05")),
+            ]
+        )
+        ca_public_key_handle = objs[0]
+
+        attributes = session.getAttributeValue(
+            ca_public_key_handle,
+            [PyKCS11.CKA_VALUE],
+        )
+
+        return x509.load_der_x509_certificate(bytes(attributes[0]))
+
+    @property
+    def curve(self) -> ec.EllipticCurve:
+        """
+        The EllipticCurve that this key is on.
+        """
+        return self.public_key().curve
+
+    @property
+    def key_size(self) -> int:
+        return self.public_key().key_size
+
+    def sign(
+        self,
+        data: bytes,
+        signature_algorithm: ec.EllipticCurveSignatureAlgorithm,
+    ) -> bytes:
+        # TODO: what to do with signature_algorithm
+
+        slot = self._pkcs11_lib.getSlotList(tokenPresent=True)[0]
+
+        session = self._pkcs11_lib.openSession(
+            slot, PyKCS11.CKF_SERIAL_SESSION | PyKCS11.CKF_RW_SESSION
+        )
+        session.login("123456")
+
+        objs = session.findObjects(
+            [
+                (PyKCS11.CKA_CLASS, PyKCS11.CKO_PRIVATE_KEY),
+                (PyKCS11.CKA_ID, bytes.fromhex("05")),
+            ]
+        )
+        ca_private_key_handle = objs[0]
+
+        return bytes(
+            session.sign(
+                ca_private_key_handle, data, PyKCS11.Mechanism(PyKCS11.CKM_ECDSA_SHA384)
+            )
+        )
+
+    def private_numbers(self) -> ec.EllipticCurvePrivateNumbers:
+        raise NotImplementedError()
+
+    def private_bytes(
+        self,
+        encoding: _serialization.Encoding,
+        format: _serialization.PrivateFormat,
+        encryption_algorithm: _serialization.KeySerializationEncryption,
+    ) -> bytes:
+        raise NotImplementedError()
 
 
 def main():
-    pkcs11_lib = PyKCS11.PyKCS11Lib()
-    pkcs11_lib.load("/usr/lib64/libykcs11.so.2")
+    ybi_key = YubiKeyECPrivateKey()
 
-    slot = pkcs11_lib.getSlotList(tokenPresent=True)[0]
-    token = pkcs11_lib.getTokenInfo(slot)
+    private_key = ec.generate_private_key(ec.SECP384R1())
 
-    if token.label.strip() != "YubiKey PIV #30767293":
-        print("could not find correct token")
-        exit(1)
+    print(ybi_key.public_key())
+    print(ybi_key.curve)
+    print(ybi_key.key_size)
 
-    session = pkcs11_lib.openSession(
-        slot, PyKCS11.CKF_SERIAL_SESSION | PyKCS11.CKF_RW_SESSION
-    )
-    session.login("123456")
+    now = datetime.datetime.now()
 
-    objs = session.findObjects(
+    subject = x509.Name(
         [
-            (PyKCS11.CKA_CLASS, PyKCS11.CKO_PRIVATE_KEY),
-            (PyKCS11.CKA_ID, bytes.fromhex("05")),
+            x509.NameAttribute(NameOID.COMMON_NAME, "YubiKey Cert"),
+            x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Home Lab"),
+            x509.NameAttribute(NameOID.ORGANIZATIONAL_UNIT_NAME, "Step CA"),
         ]
     )
-    ca_private_key_handle = objs[0]
-    print(ca_private_key_handle)
 
-    with open(
-        "/var/home/rbelgrave/projects/github.com/rmb938/ansible_step-ca/ca.pem", "rb"
-    ) as f:
-        ca_cert = x509.load_der_x509_certificate(f.read(), default_backend())
-
-    with open(
-        "/var/home/rbelgrave/projects/github.com/rmb938/ansible_step-ca/leaf.csr", "rb"
-    ) as f:
-        csr = x509.load_pem_x509_csr(f.read())
-
-    # Sign with cryptography
-    now = datetime.datetime.utcnow()
     builder = (
         x509.CertificateBuilder()
-        .subject_name(csr.subject)
-        .issuer_name(ca_cert.subject)
-        .public_key(csr.public_key())
-        .serial_number(x509.random_serial_number())
+        .issuer_name(ybi_key.certificate.subject)
+        .subject_name(subject)
         .not_valid_before(now)
-        .not_valid_after(now + datetime.timedelta(days=365))
-    )
-
-    # Add Extensions
-    # Subject Key Identifier
-    subject_key_identifier = x509.SubjectKeyIdentifier.from_public_key(csr.public_key())
-    builder = builder.add_extension(subject_key_identifier, critical=False)
-
-    # Authority Key Identifier
-    authority_key_identifier = x509.AuthorityKeyIdentifier.from_issuer_public_key(
-        ca_cert.public_key()
-    )
-    builder = builder.add_extension(authority_key_identifier, critical=False)
-
-    # Add extensions from CSR (CRUCIAL FIX)
-    # for ext in csr.extensions:
-    #     builder = builder.add_extension(ext, ext.critical)
-
-    # Use a dummy private key (can be None) for cryptography signing
-    certificate = builder.sign(
-        private_key=ec.generate_private_key(ec.SECP384R1(), default_backend()),
-        algorithm=hashes.SHA384(),
-        backend=default_backend(),
-    )
-    print(
-        "TBS Certificate (Hex):",
-        binascii.hexlify(certificate.tbs_certificate_bytes).decode(),
-    )
-
-    # Sign the certificate using PKCS#11
-    tbs_bytes = certificate.tbs_certificate_bytes
-
-    hashed_tbs = hashlib.sha384(tbs_bytes).digest()
-
-    # Sign the certificate using PKCS#11
-    tbs_bytes = certificate.tbs_certificate_bytes
-    hashed_tbs = hashlib.sha384(tbs_bytes).digest()
-    signature_der = bytes(
-        session.sign(
-            ca_private_key_handle, hashed_tbs, PyKCS11.Mechanism(PyKCS11.CKM_ECDSA)
+        .not_valid_after(now + datetime.timedelta(days=(365 * 3)))  # 3 year validity
+        .serial_number(x509.random_serial_number())
+        .public_key(private_key.public_key())
+        # Some examples of extensions to add, many more are possible:
+        .add_extension(
+            x509.BasicConstraints(ca=False, path_length=None),
+            critical=True,
+        )
+        .add_extension(
+            x509.KeyUsage(
+                digital_signature=True,
+                content_commitment=False,
+                key_encipherment=False,
+                data_encipherment=False,
+                key_agreement=False,
+                key_cert_sign=False,
+                crl_sign=False,
+                encipher_only=False,
+                decipher_only=False,
+            ),
+            critical=True,
+        )
+        .add_extension(
+            x509.ExtendedKeyUsage(
+                [
+                    ExtendedKeyUsageOID.CLIENT_AUTH,
+                    ExtendedKeyUsageOID.SERVER_AUTH,
+                ]
+            ),
+            critical=False,
+        )
+        .add_extension(
+            x509.SubjectKeyIdentifier.from_public_key(private_key.public_key()),
+            critical=False,
+        )
+        .add_extension(
+            x509.AuthorityKeyIdentifier.from_issuer_public_key(ybi_key.public_key()),
+            critical=False,
+        )
+        .add_extension(
+            x509.CRLDistributionPoints(
+                [
+                    x509.DistributionPoint(
+                        full_name=[
+                            x509.UniformResourceIdentifier(
+                                "http://step-ca.us-homelab1.hl.rmb938.me/1.0/crl"
+                            ),
+                        ],
+                        relative_name=None,
+                        reasons=None,
+                        crl_issuer=None,
+                    ),
+                ]
+            ),
+            critical=False,
         )
     )
 
-    # Robust signature decoding and padding
-    try:
-        signature_asn1, _ = decoder.decode(signature_der, asn1Spec=univ.Sequence())
-        r = int(signature_asn1[0])
-        s = int(signature_asn1[1])
-
-        # Get key size in bytes (for SECP384R1 this is 48)
-        key_size_bytes = (csr.public_key().key_size + 7) // 8
-
-        r_bytes = r.to_bytes(key_size_bytes, "big")  # Pad R
-        s_bytes = s.to_bytes(key_size_bytes, "big")  # Pad S
-        signature_bytes = r_bytes + s_bytes  # Concatenate padded values
-
-    except Exception as e:
-        print(
-            f"Signature is not ASN.1 encoded (probably raw R/S). Padding raw signature."
-        )
-        key_size_bytes = (csr.public_key().key_size + 7) // 8
-        if len(signature_der) != 2 * key_size_bytes:
-            print(
-                f"Signature length is incorrect. Expected {2 * key_size_bytes} bytes, got {len(signature_der)} bytes."
-            )
-            return
-        signature_bytes = signature_der
-
-    # Correctly create the BitString (CRUCIAL FIX - Using a different method)
-    sig_value = univ.BitString(
-        hexValue=binascii.hexlify(signature_bytes).decode()
-    )  # No explicit tagging
-
-    # Construct the full Certificate structure
-    cert_data = univ.Sequence()
-    cert_data.setComponentByPosition(
-        0, decoder.decode(certificate.tbs_certificate_bytes)[0]
-    )
-
-    # Signature Algorithm (in Certificate - THIS WAS MISSING)
-    sig_alg_cert = univ.Sequence()
-    sig_alg_cert.setComponentByPosition(
-        0, univ.ObjectIdentifier("1.2.840.10045.4.3.3")
-    )  # ecdsa-with-SHA384
-    sig_alg_cert.setComponentByPosition(1, univ.Null(""))
-    cert_data.setComponentByPosition(1, sig_alg_cert)
-
-    cert_data.setComponentByPosition(2, sig_value)  # No explicit tagging here
-
-    signed_cert_der = encoder.encode(cert_data)
-
-    # Convert DER to PEM
-    cert = x509.load_der_x509_certificate(signed_cert_der, default_backend())
-    signed_cert_pem = cert.public_bytes(Encoding.PEM)
-    print(signed_cert_pem.decode("utf-8"))
+    certificate = builder.sign(private_key=ybi_key, algorithm=hashes.SHA384())
+    print(certificate.public_bytes(encoding=serialization.Encoding.PEM).decode("utf-8"))
 
 
 main()

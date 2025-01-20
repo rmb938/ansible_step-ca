@@ -115,11 +115,3 @@ Need 3 yubikeys total, 2 for the roots (one as a backup) and one for the interme
 The following steps should be performed while the computer is not plugged into a network. This minimizes any risk of key compromise.
 
 TODO: yubikey can generate CA's directly on the device but need to do it via raw python.
-
-Can use
-
-`PKCS11_MODULE_PATH=/usr/lib64/libykcs11.so.2 /usr/bin/openssl x509 -req -in leaf.csr -CA ca.pem -CAkey "pkcs11:token=YubiKey PIV #30767293;id=%05;type=private" -engine pkcs11 -CAkeyform engine -CAcreateserial -out leaf.crt -days 365 -sha384`
-
-to sign a CSR from a key on a yubikey. It works and can be used in Golang.
-
-Cannot figure out how to do the above command it in python without subprocess. `sign-cert.py` creates a valid cert to use in openssl, but golang explodes trying to read it in. No idea what is wrong.
