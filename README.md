@@ -117,8 +117,6 @@ Need 3 yubikeys total, 2 for the roots (one as a backup) and one for the interme
 
 ##### Root Certificate
 
-
-
 1. Change the management, user pins, and PUK pins.
     ```bash
     TODO:
