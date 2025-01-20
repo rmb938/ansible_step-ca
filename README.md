@@ -126,6 +126,7 @@ Need 3 yubikeys total, 2 for the roots (one as a backup) and one for the interme
     ```bash
     /usr/bin/python3 generate-root.py
     ```
+1. Unplug Yubikeys and reboot to clear any memory of the keys
 1. Keep the Root Yubikeys and Pins in a safe place
 
 ##### Intermediate Certificate
@@ -144,5 +145,6 @@ Need 3 yubikeys total, 2 for the roots (one as a backup) and one for the interme
     ```bash
     /usr/bin/python3 generate-intermediate.py
     ```
+1. Unplug Root Yubikey and reboot to clear any memory of the keys
 1. Put the root Yubikey back in a safe place
 1. Plug the system back into the network
