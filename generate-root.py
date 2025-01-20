@@ -9,7 +9,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.x509.oid import NameOID
 from ykman import scripting as s
 from yubikit.core.smartcard import ApduError
-from yubikit.piv import SLOT, PivSession
+from yubikit.piv import DEFAULT_MANAGEMENT_KEY, SLOT, PivSession
 
 
 def generate_root_certificate() -> tuple[x509.Certificate, ec.EllipticCurvePrivateKey]:
@@ -139,8 +139,8 @@ def main():
     # key = click.prompt(
     #     "Enter management key", default=DEFAULT_MANAGEMENT_KEY.hex(), hide_input=True
     # )
-    root_pin = "123456"
-    write_keys(yubikey, root_certificate, root_private_key)
+    root_management_pin = DEFAULT_MANAGEMENT_KEY.hex()
+    write_keys(yubikey, root_certificate, root_private_key, root_management_pin)
 
     print("Backing up root to another Yubikey")
     yubikey, serials = next_yubikey(serials)
@@ -149,8 +149,8 @@ def main():
     # key = click.prompt(
     #     "Enter management key", default=DEFAULT_MANAGEMENT_KEY.hex(), hide_input=True
     # )
-    root_pin = "123456"
-    write_keys(yubikey, root_certificate, root_private_key, root_pin)
+    root_management_pin = DEFAULT_MANAGEMENT_KEY.hex()
+    write_keys(yubikey, root_certificate, root_private_key, root_management_pin)
 
 
 if __name__ == "__main__":
