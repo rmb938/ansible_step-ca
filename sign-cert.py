@@ -34,7 +34,7 @@ class YubiKeyECPrivateKey(ec.EllipticCurvePrivateKey):
         objs = session.findObjects(
             [
                 (PyKCS11.CKA_CLASS, PyKCS11.CKO_CERTIFICATE),
-                (PyKCS11.CKA_ID, bytes.fromhex("05")),
+                (PyKCS11.CKA_LABEL, "X.509 Certificate for Retired Key 1"),
             ]
         )
         ca_public_key_handle = objs[0]
@@ -74,7 +74,7 @@ class YubiKeyECPrivateKey(ec.EllipticCurvePrivateKey):
         objs = session.findObjects(
             [
                 (PyKCS11.CKA_CLASS, PyKCS11.CKO_PRIVATE_KEY),
-                (PyKCS11.CKA_ID, bytes.fromhex("05")),
+                (PyKCS11.CKA_LABEL, "Private key for Retired Key 1"),
             ]
         )
         ca_private_key_handle = objs[0]
@@ -98,6 +98,9 @@ class YubiKeyECPrivateKey(ec.EllipticCurvePrivateKey):
 
 
 def main():
+    # TODO: take pins as input
+    # TODO: take object id labels as input, see "Key Alias per Slot and Object Type"
+    #   here https://developers.yubico.com/yubico-piv-tool/YKCS11/Functions_and_values.html
     ybi_key = YubiKeyECPrivateKey()
 
     private_key = ec.generate_private_key(ec.SECP384R1())
