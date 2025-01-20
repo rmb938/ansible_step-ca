@@ -109,14 +109,16 @@ Need 3 yubikeys total, 2 for the roots (one as a backup) and one for the interme
     ```bash
     sudo apt install yubikey-manager TODO:
     ```
-
-##### Root Certificate
-
-1. Copy the `generate-root.py` script to the server
+1. Copy the `generate-root.py` and `generate-intermediate.py` scripts to the server
     ```bash
     TODO:
     ```
 1. Disconnect the server from the network
+
+##### Root Certificate
+
+
+
 1. Change the management, user pins, and PUK pins.
     ```bash
     TODO:
@@ -131,11 +133,6 @@ Need 3 yubikeys total, 2 for the roots (one as a backup) and one for the interme
 
 ##### Intermediate Certificate
 
-1. Copy the `generate-intermediate.py` script to the server
-    ```bash
-    TODO:
-    ```
-1. Disconnect the server from the network
 1. Change the management, user, and PUK PINs, store them on the filesystem for Step CA
     ```bash
     TODO:
