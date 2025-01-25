@@ -115,7 +115,7 @@ Need 3 yubikeys total, 2 for the roots (one as a backup) and one for the interme
 
 1. Install the required packages
     ```bash
-    sudo apt install yubikey-manager pwgen TODO:
+    sudo apt install yubikey-manager pwgen ykcs11 pkcs11-provider python3-pykcs11
     ```
 1. Copy the `generate-root.py` and `generate-intermediate.py` scripts to the server
     ```bash
