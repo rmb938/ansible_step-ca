@@ -33,7 +33,7 @@ and [Ubuntu Server for Arm - 24.04](https://ubuntu.com/download/server/arm) inst
     curl -fsSL https://pkgs.tailscale.com/stable/ubuntu/noble.tailscale-keyring.list | sudo tee /etc/apt/sources.list.d/tailscale.list
     sudo apt-get update
     sudo apt-get install tailscale
-    sudo tailscale up --hostname "$(hostname -f | awk -F"." '{print $3}')-$(hostname -f | awk -F"." '{print $2}')-$(hostname)" --ssh --advertise-tags "tag:servers,tag:cloud-$(hostname -f | awk -F"." '{print $3}')-region-$(hostname -f | awk -F"." '{print $2}'),tag:step-ca"
+    sudo tailscale up --hostname "$(hostname -d | awk -F"." '{print $2}')-$(hostname -d | awk -F"." '{print $1}')-$(hostname -s)" --ssh --advertise-tags "tag:servers,tag:cloud-$(hostname -d | awk -F"." '{print $2}')-region-$(hostname -d | awk -F"." '{print $1}'),tag:step-ca"
     ```
 
 ### Full Disk Encryption via USB Key
