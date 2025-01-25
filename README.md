@@ -119,7 +119,8 @@ Need 3 yubikeys total, 2 for the roots (one as a backup) and one for the interme
     ```
 1. Copy the `generate-root.py` and `generate-intermediate.py` scripts to the server
     ```bash
-    TODO:
+    scp generate-root.py ubuntu@step-ca.us-homelab1.hl.rmb938.me:/home/ubuntu/
+    scp generate-intermediate.py ubuntu@step-ca.us-homelab1.hl.rmb938.me:/home/ubuntu/
     ```
 1. Disconnect the server from the network
 
