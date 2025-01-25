@@ -9,7 +9,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.x509.oid import NameOID
 from ykman import scripting as s
 from yubikit.core.smartcard import ApduError
-from yubikit.piv import DEFAULT_MANAGEMENT_KEY, SLOT, PivSession
+from yubikit.piv import DEFAULT_MANAGEMENT_KEY, MANAGEMENT_KEY_TYPE, SLOT, PivSession
 
 
 def generate_root_certificate() -> tuple[x509.Certificate, ec.EllipticCurvePrivateKey]:
@@ -99,7 +99,9 @@ def write_keys(
     except ApduError as e:
         pass
 
-    piv.authenticate(bytes.fromhex(pin))
+    piv.authenticate(
+        key_type=MANAGEMENT_KEY_TYPE.AES192, management_key=bytes.fromhex(pin)
+    )
 
     # Put the key and certificate
     print("Writting private key and public certificate")

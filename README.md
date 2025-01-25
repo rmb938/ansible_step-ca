@@ -130,19 +130,19 @@ Need 3 yubikeys total, 2 for the roots (one as a backup) and one for the interme
     ```bash
     # Generate and change PIN
     pwgen -s -B -v -r abcdefghijklmnopqrstuvwxyz -A 8 1
-    ykman piv access change-pin
+    sudo ykman piv access change-pin
 
     # Generate and change Management Key
-    ykman piv access change-management-key -g -a AES256
+    sudo ykman piv access change-management-key -g -a AES192
 
     # Generate and change PUK
     pwgen -s -B -v -n 8 1
-    ykman piv access change-puk
+    sudo ykman piv access change-puk
     ```
 1. Write the management, user pins, and PUK pins down and keep them in a safe place
 1. Generate the root
     ```bash
-    /usr/bin/python3 generate-root.py
+    sudo /usr/bin/python3 generate-root.py
     ```
 1. Unplug Yubikeys and reboot to clear any memory of the keys
 1. Keep the Root Yubikeys and Pins in a safe place
@@ -151,24 +151,24 @@ Need 3 yubikeys total, 2 for the roots (one as a backup) and one for the interme
 
 1. Create `step` user and home directory
     ```bash
-    useradd --user-group --system --home /etc/step-ca --shell /bin/false step
-    mkdir -p /etc/step-ca
-    chown -R step:step /etc/step-ca
+    sudo useradd --user-group --system --home /etc/step-ca --shell /bin/false step
+    sudo mkdir -p /etc/step-ca
+    sudo chown -R step:step /etc/step-ca
     ```
 1. Change the management, user, and PUK PINs, store them on the filesystem for Step CA
     ```bash
-    mkdir -p /etc/step-ca/yubikey/
+    sudo mkdir -p /etc/step-ca/yubikey/
     # Generate and change PIN
-    ykman piv access change-pin -P 123456 -n $(pwgen -s -B -v -r abcdefghijklmnopqrstuvwxyz -A 8 1 | tee /etc/step-ca/yubikey/pin)
-    chmod 0400 /etc/step-ca/yubikey/pin
+    sudo ykman piv access change-pin -P 123456 -n $(pwgen -s -B -v -r abcdefghijklmnopqrstuvwxyz -A 8 1 | sudo tee /etc/step-ca/yubikey/pin)
+    sudo chmod 0400 /etc/step-ca/yubikey/pin
 
     # Generate and change Management Key
-    ykman piv access change-management-key -a AES256 -m 010203040506070801020304050607080102030405060708 -n $(openssl rand -hex 32 | tee /etc/step-ca/yubikey/management-key)
-    chmod 0400 /etc/step-ca/yubikey/management-key
+    sudo ykman piv access change-management-key -a AES192 -m 010203040506070801020304050607080102030405060708 -n $(openssl rand -hex 24 | sudo tee /etc/step-ca/yubikey/management-key)
+    sudo chmod 0400 /etc/step-ca/yubikey/management-key
 
     # Generate and change PUK
-    ykman piv access change-puk -p 12345678 -n $(pwgen -s -B -v -n 8 1 | tee /etc/step-ca/yubikey/puk)
-    chmod 0400 /etc/step-ca/yubikey/puk
+    sudo ykman piv access change-puk -p 12345678 -n $(pwgen -s -B -v -n 8 1 | sudo tee /etc/step-ca/yubikey/puk)
+    sudo chmod 0400 /etc/step-ca/yubikey/puk
     ```
 1. Insert one of the Yubikeys with the root keys
 1. Generate the intermediate

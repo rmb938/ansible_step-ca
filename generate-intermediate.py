@@ -11,13 +11,32 @@ from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
 from ykman import scripting as s
 from yubikit.core.smartcard import ApduError
 from yubikit.openpgp import DEFAULT_USER_PIN
-from yubikit.piv import DEFAULT_MANAGEMENT_KEY, SLOT, PivSession
+from yubikit.piv import DEFAULT_MANAGEMENT_KEY, MANAGEMENT_KEY_TYPE, SLOT, PivSession
+
+libykcs11_locations = [
+    "/usr/lib64/libykcs11.so.2",
+    "/usr/lib/x86_64-linux-gnu/libykcs11.so.2",
+    "/usr/lib/aarch64-linux-gnu/libykcs11.so.2",
+]
 
 
 class YubiKeyECPrivateKey(ec.EllipticCurvePrivateKey):
     def __init__(self, serial: int, pin: str):
         self._pkcs11_lib = PyKCS11.PyKCS11Lib()
-        self._pkcs11_lib.load("/usr/lib64/libykcs11.so.2")
+
+        lib_found = False
+        for libykcs11_location in libykcs11_locations:
+            print(f"Trying to load {libykcs11_location}")
+            try:
+                self._pkcs11_lib.load(libykcs11_location)
+                lib_found = True
+                print(f"Loaded {libykcs11_location}")
+                break
+            except PyKCS11.PyKCS11Error:
+                continue
+
+        if not lib_found:
+            raise Exception("could not find libykcs11.so.2")
 
         for slot in self._pkcs11_lib.getSlotList(tokenPresent=True):
             token_info = self._pkcs11_lib.getTokenInfo(slot)
@@ -229,7 +248,9 @@ def write_keys(
     except ApduError as e:
         pass
 
-    piv.authenticate(bytes.fromhex(pin))
+    piv.authenticate(
+        key_type=MANAGEMENT_KEY_TYPE.AES192, management_key=bytes.fromhex(pin)
+    )
 
     # Put the key and certificate
     print("Writting private key and public certificate")
