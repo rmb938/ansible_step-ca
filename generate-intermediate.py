@@ -229,7 +229,7 @@ def write_keys(
     except ApduError as e:
         pass
 
-    piv.authenticate(bytes.fromhex(pin.hex()))
+    piv.authenticate(bytes.fromhex(pin))
 
     # Put the key and certificate
     print("Writting private key and public certificate")
