@@ -85,6 +85,41 @@
   args:
     creates: /etc/step-ca/intermediate.crt
 
+- name: Step intermediate permissions
+  ansible.builtin.file:
+    path: /etc/step-ca/intermediate.crt
+    owner: step
+    group: step
+
+# No password, we aren't putting the key in provisioners so it doesn't really matter
+# If someone gets on the box they have access to the intermediate anyway...
+- name: Create JWK Keypair
+  ansible.builtin.command:
+    cmd: /usr/bin/step crypto jwk create /etc/step-ca/ca-jwk.pub.json /etc/step-ca/ca-jwk.json --no-password --insecure
+  args:
+    creates: /etc/step-ca/ca-jwk.json
+
+- name: Create JWK PEM Keypair
+  ansible.builtin.command:
+    cmd: /usr/bin/step crypto keypair --from-jwk /etc/step-ca/ca-jwk.json /dev/null /etc/step-ca/ca-jwk.key --no-password --insecure -f
+  args:
+    creates: /etc/step-ca/ca-jwk.key
+
+- name: Step JWK & PEM permissions
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: step
+    group: step
+  with_items:
+    - /etc/step-ca/ca-jwk.pub.json
+    - /etc/step-ca/ca-jwk.json
+    - /etc/step-ca/ca-jwk.key
+
+- name: Read jwk public json
+  ansible.builtin.slurp:
+    src: /etc/step-ca/ca-jwk.pub.json
+  register: jwk_pub_json
+
 - name: Place step-ca config
   ansible.builtin.template:
     src: etc/step-ca/config/ca.json
@@ -116,4 +151,4 @@
   ansible.builtin.systemd_service:
     name: step-ca.service
     state: reloaded
-  when: step_ca_config.changed
+  when: step_ca_config.changed or smallstep_certificates_git.changed

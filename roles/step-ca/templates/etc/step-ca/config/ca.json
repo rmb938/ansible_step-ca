@@ -1,4 +1,5 @@
 {
+  "ansible_managed": {{ ansible_managed }},
   "root": "/usr/local/share/ca-certificates/step-ca-homelab.crt",
   "crt": "/etc/step-ca/intermediate.crt",
   "key": "pkcs11:id=05",
@@ -48,7 +49,13 @@
         }
       }
     },
-    "provisioners": [],
+    "provisioners": [
+      {
+        "type": "JWK",
+        "name": "ca-jwk",
+        "key": {{ jwk_pub_json['content'] | b64decode }}
+      }
+    ],
     "backdate": "1m0s"
   }
 }

@@ -27,31 +27,31 @@ StartLimitInterval=30
 StartLimitBurst=3
 
 ; Process capabilities & privileges
-; AmbientCapabilities=CAP_NET_BIND_SERVICE
+AmbientCapabilities=CAP_NET_BIND_SERVICE
 ; CapabilityBoundingSet=CAP_NET_BIND_SERVICE
-; SecureBits=keep-caps
-; NoNewPrivileges=yes
+SecureBits=keep-caps
+NoNewPrivileges=yes
 
 ; Sandboxing
-; ProtectSystem=full
-; ProtectHome=true
-; RestrictNamespaces=true
-; RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
-; PrivateTmp=true
-; PrivateDevices=true
-; ProtectClock=true
-; ProtectControlGroups=true
-; ProtectKernelTunables=true
-; ProtectKernelLogs=true
-; ProtectKernelModules=true
-; LockPersonality=true
-; RestrictSUIDSGID=true
-; RemoveIPC=true
-; RestrictRealtime=true
-; SystemCallFilter=@system-service
-; SystemCallArchitectures=native
-; MemoryDenyWriteExecute=true
-; ReadWriteDirectories=/etc/step-ca/db
+ProtectSystem=full
+ProtectHome=true
+RestrictNamespaces=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+PrivateTmp=true
+PrivateDevices=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectKernelTunables=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+LockPersonality=true
+RestrictSUIDSGID=true
+RemoveIPC=true
+RestrictRealtime=true
+SystemCallFilter=@system-service
+SystemCallArchitectures=native
+MemoryDenyWriteExecute=true
+ReadWriteDirectories=/etc/step-ca/db
 
 [Install]
 WantedBy=multi-user.target
