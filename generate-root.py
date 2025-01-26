@@ -55,16 +55,6 @@ def generate_root_certificate() -> tuple[x509.Certificate, ec.EllipticCurvePriva
             critical=True,
         )
         .add_extension(
-            x509.NameConstraints(
-                permitted_subtrees=[
-                    x509.DNSName(".rmb938.me"),
-                    x509.DNSName(".tailnet-047c.ts.net"),
-                ],
-                excluded_subtrees=None,
-            ),
-            critical=True,
-        )
-        .add_extension(
             x509.SubjectKeyIdentifier.from_public_key(private_key.public_key()),
             critical=False,
         )

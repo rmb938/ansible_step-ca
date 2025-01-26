@@ -1,0 +1,119 @@
+---
+# Without these step-ca errors with
+# Error: open pkcs11:id=05: getPublicKey failed: error finding key with uri pkcs11:id=05: unsupported elliptic curve
+# Noble is on a old version, 2.2.0.
+- name: Install newer libykpiv2
+  ansible.builtin.apt:
+    deb: https://launchpad.net/ubuntu/+archive/primary/+files/libykpiv2_2.5.2-1_arm64.deb
+    state: present
+
+- name: Install newer ykcs11
+  ansible.builtin.apt:
+    deb: https://launchpad.net/ubuntu/+archive/primary/+files/ykcs11_2.5.2-1_arm64.deb
+    state: present
+
+- name: Install build tools
+  ansible.builtin.package:
+    name:
+      - make
+      - gcc
+      - ack
+      - libpcsclite-dev
+      - pkg-config
+      - golang
+    state: present
+
+- name: Clone smallstep/certificates
+  ansible.builtin.git:
+    repo: https://github.com/smallstep/certificates.git
+    dest: /var/lib/smallstep/certificates
+    version: v0.28.1
+  register: smallstep_certificates_git
+
+- name: Build and Install step-ca  # noqa: no-handler
+  ansible.builtin.command:
+    cmd: make install GOFLAGS=""
+    chdir: /var/lib/smallstep/certificates
+  changed_when: false
+  when: smallstep_certificates_git.changed
+
+- name: Allow binding to 443
+  community.general.capabilities:
+    path: /usr/local/bin/step-ca
+    capability: cap_net_bind_service=eip
+    state: present
+
+- name: Create db dir
+  ansible.builtin.file:
+    path: /etc/step-ca/db
+    state: directory
+    mode: "0755"
+    owner: step
+    group: step
+
+- name: Create config dir
+  ansible.builtin.file:
+    path: /etc/step-ca/config
+    state: directory
+    mode: "0755"
+    owner: step
+    group: step
+
+- name: Create templates dir
+  ansible.builtin.file:
+    path: /etc/step-ca/templates
+    state: directory
+    mode: "0755"
+    owner: step
+    group: step
+
+- name: Extract root certificate
+  ansible.builtin.command:
+    cmd: "/usr/bin/ykman piv certificates export 83 /usr/local/share/ca-certificates/step-ca-homelab.crt"
+  args:
+    creates: /usr/local/share/ca-certificates/step-ca-homelab.crt
+  register: homelab_root
+
+- name: Update CA Trust  # noqa: no-handler
+  ansible.builtin.command: update-ca-certificates -f
+  changed_when: false
+  when: homelab_root.changed
+
+- name: Extract intermediate certificate
+  ansible.builtin.command:
+    cmd: "/usr/bin/ykman piv certificates export 82 /etc/step-ca/intermediate.crt"
+  args:
+    creates: /etc/step-ca/intermediate.crt
+
+- name: Place step-ca config
+  ansible.builtin.template:
+    src: etc/step-ca/config/ca.json
+    dest: /etc/step-ca/config/ca.json
+    mode: "0644"
+    owner: step
+    group: step
+  register: step_ca_config
+
+- name: Place step-ca service
+  ansible.builtin.template:
+    src: etc/systemd/system/step-ca.service
+    dest: /etc/systemd/system/step-ca.service
+    mode: "0644"
+  register: smallstep_ca_systemd_service_template
+
+- name: Reload SystemD # noqa: no-handler
+  ansible.builtin.systemd:
+    daemon_reload: true
+  when: smallstep_ca_systemd_service_template.changed
+
+- name: Enable and start
+  ansible.builtin.systemd_service:
+    name: step-ca.service
+    state: started
+    enabled: true
+
+- name: Reload on config change # noqa: no-handler
+  ansible.builtin.systemd_service:
+    name: step-ca.service
+    state: reloaded
+  when: step_ca_config.changed

@@ -1,5 +1,13 @@
-- name: Bootstrap
+# - name: Bootstrap
+#   hosts: all
+#   become: true
+#   remote_user: ubuntu
+#   roles:
+#     - rmb938.bootstrap
+
+- name: Step CA
   hosts: all
   become: true
+  remote_user: ubuntu
   roles:
-    - rmb938.bootstrap
+    - step-ca

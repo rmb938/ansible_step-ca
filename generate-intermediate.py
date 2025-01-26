@@ -6,7 +6,7 @@ import click
 import PyKCS11
 from cryptography import x509
 from cryptography.hazmat.primitives import _serialization, hashes
-from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import ec, utils
 from cryptography.x509.oid import ExtendedKeyUsageOID, NameOID
 from ykman import scripting as s
 from yubikit.core.smartcard import ApduError
@@ -44,7 +44,10 @@ class YubiKeyECPrivateKey(ec.EllipticCurvePrivateKey):
                 self._pkcs11_slot = slot
                 break
 
-        self._pin = pin
+        self._session = self._pkcs11_lib.openSession(
+            self._pkcs11_slot, PyKCS11.CKF_SERIAL_SESSION | PyKCS11.CKF_RW_SESSION
+        )
+        self._session.login(pin)
 
     def exchange(
         self, algorithm: ec.ECDH, peer_public_key: ec.EllipticCurvePublicKey
@@ -59,21 +62,16 @@ class YubiKeyECPrivateKey(ec.EllipticCurvePrivateKey):
 
     @property
     def certificate(self) -> x509.Certificate:
-        session = self._pkcs11_lib.openSession(
-            self._pkcs11_slot, PyKCS11.CKF_SERIAL_SESSION | PyKCS11.CKF_RW_SESSION
-        )
-
-        objs = session.findObjects(
+        objs = self._session.findObjects(
             [
                 (PyKCS11.CKA_CLASS, PyKCS11.CKO_CERTIFICATE),
                 (PyKCS11.CKA_LABEL, "X.509 Certificate for Retired Key 1"),
             ]
         )
-        ca_public_key_handle = objs[0]
+        ca_cert_handle = objs[0]
 
-        attributes = session.getAttributeValue(
-            ca_public_key_handle,
-            [PyKCS11.CKA_VALUE],
+        attributes = self._session.getAttributeValue(
+            ca_cert_handle, [PyKCS11.CKA_VALUE], True
         )
 
         return x509.load_der_x509_certificate(bytes(attributes[0]))
@@ -95,24 +93,29 @@ class YubiKeyECPrivateKey(ec.EllipticCurvePrivateKey):
         signature_algorithm: ec.EllipticCurveSignatureAlgorithm,
     ) -> bytes:
         # TODO: what to do with signature_algorithm
-        session = self._pkcs11_lib.openSession(
-            self._pkcs11_slot, PyKCS11.CKF_SERIAL_SESSION | PyKCS11.CKF_RW_SESSION
-        )
-        session.login(self._pin)
-
-        objs = session.findObjects(
+        objs = self._session.findObjects(
             [
                 (PyKCS11.CKA_CLASS, PyKCS11.CKO_PRIVATE_KEY),
+                (PyKCS11.CKA_KEY_TYPE, PyKCS11.CKK_ECDSA),
                 (PyKCS11.CKA_LABEL, "Private key for Retired Key 1"),
             ]
         )
         ca_private_key_handle = objs[0]
 
-        return bytes(
-            session.sign(
-                ca_private_key_handle, data, PyKCS11.Mechanism(PyKCS11.CKM_ECDSA_SHA384)
-            )
+        signature = self._session.sign(
+            ca_private_key_handle,
+            data,
+            PyKCS11.Mechanism(PyKCS11.CKM_ECDSA_SHA384),
         )
+
+        key_size_bytes = (
+            self.key_size // 8
+        )  # Calculate key size in bytes (384 // 8 = 48)
+
+        r = int.from_bytes(signature[:key_size_bytes], byteorder="big")
+        s = int.from_bytes(signature[key_size_bytes:], byteorder="big")
+
+        return utils.encode_dss_signature(r, s)
 
     def private_numbers(self) -> ec.EllipticCurvePrivateNumbers:
         raise NotImplementedError()
@@ -154,7 +157,7 @@ def generate_intermediate_certificate(
         .public_key(private_key.public_key())
         # Some examples of extensions to add, many more are possible:
         .add_extension(
-            x509.BasicConstraints(ca=True, path_length=None),
+            x509.BasicConstraints(ca=True, path_length=0),
             critical=True,
         )
         .add_extension(
@@ -213,6 +216,16 @@ def generate_intermediate_certificate(
                         reasons=None,
                         crl_issuer=None,
                     ),
+                    x509.DistributionPoint(
+                        full_name=[
+                            x509.UniformResourceIdentifier(
+                                "http://hl-us-homelab1-step-ca.tailnet-047c.ts.net/1.0/crl"
+                            ),
+                        ],
+                        relative_name=None,
+                        reasons=None,
+                        crl_issuer=None,
+                    ),
                 ]
             ),
             critical=False,
@@ -230,12 +243,15 @@ def generate_intermediate_certificate(
 
 def write_keys(
     yubikey: s.ScriptingDevice,
+    root_certificate: x509.Certificate,
     certificate: x509.Certificate,
     private_key: ec.EllipticCurvePrivateKey,
     pin: str,
 ):
     # Slot 82
     slot = SLOT.RETIRED1
+
+    root_slot = SLOT.RETIRED2
 
     # Establish PIV session
     piv = PivSession(yubikey.smart_card())
@@ -256,6 +272,7 @@ def write_keys(
     print("Writting private key and public certificate")
     piv.put_key(slot, private_key)
     piv.put_certificate(slot, certificate)
+    piv.put_certificate(root_slot, root_certificate)
 
 
 def next_yubikey(serials: list[int]) -> tuple[s.ScriptingDevice, list[int]]:
@@ -301,6 +318,7 @@ def main():
     )
     write_keys(
         yubikey,
+        ybi_key.certificate,
         intermediate_certificate,
         intermediate_private_key,
         intermediate_management_pin,

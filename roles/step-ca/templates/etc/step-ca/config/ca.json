@@ -1,0 +1,54 @@
+{
+  "root": "/usr/local/share/ca-certificates/step-ca-homelab.crt",
+  "crt": "/etc/step-ca/intermediate.crt",
+  "key": "pkcs11:id=05",
+  "kms": {
+    "type": "pkcs11",
+    "uri": "pkcs11:module-path=/usr/lib/aarch64-linux-gnu/libykcs11.so.2;slot-id=0?pin-source=/etc/step-ca/yubikey/pin"
+  },
+  "address": ":443",
+  "commonName": "{{ ansible_fqdn }}",
+  "dnsNames": [
+    "{{ ansible_fqdn }}",
+    "{{ inventory_hostname }}"
+  ],
+  "logger": {
+    "format": "text"
+  },
+  "db": {
+    "type": "badgerV2",
+    "dataSource": "/etc/step-ca/db"
+  },
+  "insecureAddress": ":80",
+  "crl": {
+    "enabled": true,
+    "generateOnRevoke": true,
+    "idpURL": "http://{{ ansible_fqdn }}/1.0/crl"
+  },
+  "tls": {
+    "cipherSuites": [
+      "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+      "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"
+    ],
+    "minVersion": 1.2,
+    "maxVersion": 1.3,
+    "renegotiation": false
+  },
+  "authority": {
+    "claims": {
+      "defaultTLSCertDuration": "2160h"
+    },
+    "policy": {
+      "x509": {
+        "allow": {
+          "dns": [
+            "*.us-homelab1.hl.rmb938.me",
+            "*.tailnet-047c.ts.net"
+          ]
+        }
+      }
+    },
+    "provisioners": [],
+    "backdate": "1m0s"
+  }
+}
