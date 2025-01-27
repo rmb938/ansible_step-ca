@@ -13,7 +13,7 @@
     - step-ca
   vars:
     ras:
-      - name: acme
+      acme:
         port: 8443
         policy:
           x509:
@@ -21,32 +21,16 @@
               - "*.rmb938.me"
               - "*.us-homelab1.hl.rmb938.me"
               - "*.tailnet-047c.ts.net"
-        provisioners:
-          - type: ACME
-            name: acme
-            forceCN: true
-            challenges:
-              - http-01
-            options:
-              x509:
-                template: |
-                  {
-                    "subject": {
-                      "commonName": {{ toJson .Subject.CommonName }},
-                      "country": "US",
-                      "organization": "Home Lab",
-                      "organizationalUnit": "ACME",
-                      "province": "Minnesota"
-                    },
-                    "sans": {{ toJson .SANs }},
-                  {{- if typeIs "*rsa.PublicKey" .Insecure.CR.PublicKey }}
-                    "keyUsage": ["keyEncipherment", "digitalSignature"],
-                  {{- else }}
-                    "keyUsage": ["digitalSignature"],
-                  {{- end }}
-                    "extKeyUsage": ["serverAuth", "clientAuth"]
-                  }
-      # - name: haproxy
+        provisioner:
+          type: ACME
+          name: acme
+          forceCN: true
+          challenges:
+            - http-01
+          options:
+            x509:
+              templateFile: "templates/x509.tpl"
+      # haproxy:
       #   port: 9443
       #   policy:
       #     x509:

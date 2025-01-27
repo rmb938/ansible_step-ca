@@ -1,0 +1,49 @@
+---
+- name: Create RA db dir - {{ item.key }}
+  ansible.builtin.file:
+    path: /etc/step-ca/ras/{{ item.key }}/db
+    state: directory
+    mode: "0755"
+    owner: step
+    group: step
+
+- name: Create RA config dir - {{ item.key }}
+  ansible.builtin.file:
+    path: /etc/step-ca/ras/{{ item.key }}/config
+    state: directory
+    mode: "0755"
+    owner: step
+    group: step
+
+- name: Create RA templates dir - {{ item.key }}
+  ansible.builtin.file:
+    path: /etc/step-ca/ras/{{ item.key }}/templates
+    state: directory
+    mode: "0755"
+    owner: step
+    group: step
+
+- name: Place RA x509 template - {{ item.key }}
+  ansible.builtin.template:
+    src: etc/step-ca/ras/{{ item.key }}/templates/x509.tpl
+    dest: /etc/step-ca/ras/{{ item.key }}/templates/x509.tpl
+    mode: "0644"
+    owner: step
+    group: step
+  register: step_ra_x509_template
+
+- name: Place step-ca RA config  - {{ item.key }}
+  ansible.builtin.template:
+    src: etc/step-ca/ras/config/ca.json
+    dest: /etc/step-ca/ras/{{ item.key }}/config/ca.json
+    mode: "0644"
+    owner: step
+    group: step
+  register: step_ra_config
+
+# - name: Enable and Start RA - {{ item.key }}
+#   ansible.builtin.systemd_service: # noqa: no-handler
+#     name: step-ra@{{ item.key }}.service
+#     state: started
+#     enabled: true
+#   when: should_restart or step_ra_config.changed or step_ra_x509_template.changed
