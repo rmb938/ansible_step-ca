@@ -30,7 +30,6 @@
     mode: "0644"
     owner: step
     group: step
-  register: step_ra_x509_template
 
 - name: Place step-ca RA config  - {{ item.key }}
   ansible.builtin.template:
@@ -41,9 +40,15 @@
     group: step
   register: step_ra_config
 
-# - name: Enable and Start RA - {{ item.key }}
-#   ansible.builtin.systemd_service: # noqa: no-handler
-#     name: step-ra@{{ item.key }}.service
-#     state: started
-#     enabled: true
-#   when: should_restart or step_ra_config.changed or step_ra_x509_template.changed
+- name: Enable and Start RA - {{ item.key }}
+  ansible.builtin.systemd_service:
+    name: step-ra@{{ item.key }}.service
+    state: started
+    enabled: true
+
+- name: Restart RA - {{ item.key }}
+  ansible.builtin.systemd_service: # noqa: no-handler
+    name: step-ra@{{ item.key }}.service
+    state: restarted
+    enabled: true
+  when: should_restart or step_ra_config.changed

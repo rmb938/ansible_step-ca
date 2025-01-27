@@ -1,5 +1,4 @@
 {
-  "ansible_managed": {{ ansible_managed }},
   {% raw %}
   "subject": {
     "commonName": {{ toJson .Subject.CommonName }},

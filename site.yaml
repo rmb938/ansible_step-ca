@@ -18,18 +18,16 @@
         policy:
           x509:
             allow:
-              - "*.rmb938.me"
-              - "*.us-homelab1.hl.rmb938.me"
-              - "*.tailnet-047c.ts.net"
+              dns:
+                - "*.rmb938.me"
+                - "*.us-homelab1.hl.rmb938.me"
+                - "*.tailnet-047c.ts.net"
         provisioner:
           type: ACME
           name: acme
           forceCN: true
           challenges:
             - http-01
-          options:
-            x509:
-              templateFile: "templates/x509.tpl"
       # haproxy:
       #   port: 9443
       #   policy:

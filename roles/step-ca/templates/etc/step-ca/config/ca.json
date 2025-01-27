@@ -37,6 +37,8 @@
   },
   "authority": {
     "claims": {
+      "minTLSCertDuration": "2160h",
+      "maxTLSCertDuration": "2160h",
       "defaultTLSCertDuration": "2160h"
     },
     "policy": {
@@ -51,11 +53,18 @@
       }
     },
     "provisioners": [
+      {% for ra_name in ras.keys() %}
       {
         "type": "JWK",
-        "name": "ca-jwk",
-        "key": {{ jwk_pub_json['content'] | b64decode }}
+        "name": "ca-{{ ra_name }}-jwk",
+        "key": {{ jwk_pub_json['content'] | b64decode }},
+        "options": {
+          "x509": {
+            "templateFile": "/etc/step-ca/ras/{{ ra_name }}/templates/x509.tpl"
+          }
+        }
       }
+      {% endfor %}
     ],
     "backdate": "1m0s"
   }

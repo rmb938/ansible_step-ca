@@ -150,10 +150,17 @@
     mode: "0644"
   register: smallstep_ca_systemd_service_template
 
+- name: Place step-ra service
+  ansible.builtin.template:
+    src: etc/systemd/system/step-ra@.service
+    dest: /etc/systemd/system/step-ra@.service
+    mode: "0644"
+  register: smallstep_ra_systemd_service_template
+
 - name: Reload SystemD # noqa: no-handler
   ansible.builtin.systemd:
     daemon_reload: true
-  when: smallstep_ca_systemd_service_template.changed
+  when: smallstep_ca_systemd_service_template.changed or smallstep_ra_systemd_service_template.changed
 
 - name: Enable and start
   ansible.builtin.systemd_service:
@@ -165,7 +172,7 @@
   ansible.builtin.systemd_service:
     name: step-ca.service
     state: reloaded
-  when: step_ca_config.changed or smallstep_certificates_git.changed
+  when: step_ca_config.changed or smallstep_certificates_git.changed or smallstep_ca_systemd_service_template.changed
 
 - name: Get list of existing RA directories
   ansible.builtin.find:
@@ -193,5 +200,5 @@
   ansible.builtin.include_tasks: ra.yaml
   loop: "{{ ras | dict2items }}"
   vars:
-    should_restart: "{{ smallstep_certificates_git.changed }}"
+    should_restart: "{{ smallstep_certificates_git.changed or smallstep_ra_systemd_service_template.changed }}"
     root_fingerprint: "{{ homelab_root_fingerprint.stdout }}"

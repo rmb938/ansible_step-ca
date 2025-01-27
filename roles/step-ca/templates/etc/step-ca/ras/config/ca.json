@@ -23,15 +23,17 @@
     "renegotiation": false
   },
   "authority": {
-     "type": "stepcas",
+    "type": "stepcas",
     "claims": {
+      "minTLSCertDuration": "2160h",
+      "maxTLSCertDuration": "2160h",
       "defaultTLSCertDuration": "2160h"
     },
     "certificateAuthority": "https://{{ ansible_fqdn }}",
     "certificateAuthorityFingerprint": "{{ root_fingerprint }}",
     "certificateIssuer": {
       "type" : "jwk",
-      "provisioner": "ca-jwk",
+      "provisioner": "ca-{{ item.key }}-jwk",
       "key": "/etc/step-ca/ca-jwk.key"
     },
     "policy": {{ item.value.policy | tojson }},
