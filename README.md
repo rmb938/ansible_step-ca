@@ -131,14 +131,14 @@ Need 3 yubikeys total, 2 for the roots (one as a backup) and one for the interme
         ```bash
         # Generate and change PIN
         pwgen -s -B -v -r abcdefghijklmnopqrstuvwxyz -A 8 1
-        sudo ykman piv access change-pin
+        sudo ykman piv access change-pin -P 123456
 
         # Generate and change Management Key
-        sudo ykman piv access change-management-key -g -a AES192
+        sudo ykman piv access change-management-key -m 010203040506070801020304050607080102030405060708 -g -a AES192
 
         # Generate and change PUK
         pwgen -s -B -v -n 8 1
-        sudo ykman piv access change-puk
+        sudo ykman piv access change-puk -p 12345678
         ```
 1. Insert another Root Yubikey and repeat the steps above
 1. Write the management, user pins, and PUK pins down and keep them in a safe place
