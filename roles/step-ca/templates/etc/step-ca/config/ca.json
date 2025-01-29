@@ -63,7 +63,7 @@
             "templateFile": "/etc/step-ca/ras/{{ ra_name }}/templates/x509.tpl"
           }
         }
-      }
+      }{% if not loop.last %},{% endif %}
       {% endfor %}
     ],
     "backdate": "1m0s"
