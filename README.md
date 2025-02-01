@@ -71,7 +71,7 @@ Make sure Ubuntu is installed with Full Disk Encryption with a password.
     sudo update-initramfs -u
 
     # Disable systemd luks generate by adding luks.crypttab=no
-    sudo sed -i -e 's/GRUB_CMDLINE_LINUX_DEFAULT=""/GRUB_CMDLINE_LINUX_DEFAULT="luks.crypttab=no"/g' /etc/default/grub
+    echo 'GRUB_CMDLINE_LINUX_DEFAULT="$GRUB_CMDLINE_LINUX_DEFAULT luks.crypttab=no"' > /etc/default/grub.d/50_luks-crypttab.cfg
     sudo update-grub
     sudo reboot
     ```
