@@ -128,6 +128,7 @@
     cmd: "/usr/bin/ykman piv certificates export 82 /etc/step-ca/intermediate.crt"
   args:
     creates: /etc/step-ca/intermediate.crt
+  register: homelab_intermediate
 
 - name: Step intermediate permissions
   ansible.builtin.file:
@@ -202,7 +203,11 @@
   ansible.builtin.systemd_service:
     name: step-ca.service
     state: restarted # restart not reload because reload tries to redo pkcs11 without closing first
-  when: step_ca_config.changed or smallstep_certificates_git.changed or smallstep_ca_systemd_service_template.changed
+  when: step_ca_config.changed or
+    smallstep_certificates_git.changed or
+    smallstep_ca_systemd_service_template.changed or
+    homelab_root.changed or
+    homelab_intermediate.changed
 
 - name: Get list of existing RA directories
   ansible.builtin.find:

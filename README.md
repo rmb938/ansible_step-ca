@@ -115,30 +115,23 @@ Need 3 yubikeys total, 2 for the roots (one as a backup) and one for the interme
 
 1. Install the required packages
     ```bash
-    sudo apt install opensc yubikey-manager pwgen ykcs11 pkcs11-provider python3-pykcs11
+    sudo apt install opensc yubikey-manager pwgen ykcs11 pkcs11-provider python3-pykcs11 python3-click
     ```
 1. Copy the `generate-root.py` and `generate-intermediate.py` scripts to the server
     ```bash
     scp generate-root.py ubuntu@step-ca.us-homelab1.hl.rmb938.me:/home/ubuntu/
     scp generate-intermediate.py ubuntu@step-ca.us-homelab1.hl.rmb938.me:/home/ubuntu/
+    scp generate-pin.py ubuntu@step-ca.us-homelab1.hl.rmb938.me:/home/ubuntu/
     ```
-1. Disconnect the server from the network
 
 ##### Root Certificate
 
+*Note: Even though certificates are generated in memory and directly stored on the Yubikey, it is recommended to disconnect the system from the network while changing PINs and generating certificates.*
+
 1. Insert one Root Yubikey
-    1. Change the management, user pins, and PUK pins.
+    1. Change the pins.
         ```bash
-        # Generate and change PIN
-        pwgen -s -B -v -r abcdefghijklmnopqrstuvwxyz -A 8 1
-        sudo ykman piv access change-pin -P 123456
-
-        # Generate and change Management Key
-        sudo ykman piv access change-management-key -m 010203040506070801020304050607080102030405060708 -g -a AES192
-
-        # Generate and change PUK
-        pwgen -s -B -v -n 8 1
-        sudo ykman piv access change-puk -p 12345678
+        sudo /usr/bin/python3 generate-pin.py
         ```
 1. Insert another Root Yubikey and repeat the steps above
 1. Write the management, user pins, and PUK pins down and keep them in a safe place
@@ -152,18 +145,10 @@ Need 3 yubikeys total, 2 for the roots (one as a backup) and one for the interme
 ##### Intermediate Certificate
 
 1. Insert the intermediate Yubikey
-    1. Change the management, user, and PUK PINs, store them on the filesystem for Step CA
+    1. Change the pins and store them on the filesystem for Step CA
         ```bash
         sudo mkdir -p /etc/step-ca/yubikey/
-        # Generate and change PIN
-        sudo ykman piv access change-pin -P 123456 -n $(pwgen -s -B -v -r abcdefghijklmnopqrstuvwxyz -A 8 1 | sudo tee /etc/step-ca/yubikey/pin)
-        sudo chmod 0400 /etc/step-ca/yubikey/pin
-
-        # Generate and change Management Key, and throw it away
-        sudo ykman piv access change-management-key -a AES192 -m 010203040506070801020304050607080102030405060708 -g
-
-        # Generate and change PUK, and throw it away
-        sudo ykman piv access change-puk -p 12345678 -n $(pwgen -s -B -v -n 8 1)
+        sudo /usr/bin/python3 generate-pin.py --user-pin-path /etc/step-ca/yubikey/pin
         ```
     1. Remove the intermediate Yubikey
 1. Insert one of the Yubikeys with the root keys
@@ -173,7 +158,6 @@ Need 3 yubikeys total, 2 for the roots (one as a backup) and one for the interme
     ```
 1. Unplug Root Yubikey and reboot to clear any memory of the keys
 1. Put the root Yubikey back in a safe place
-1. Plug the system back into the network
 
 ### Yubikey Lost/Corrupted
 

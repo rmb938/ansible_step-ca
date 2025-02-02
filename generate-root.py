@@ -90,7 +90,7 @@ def write_keys(
         pass
 
     piv.authenticate(
-        key_type=MANAGEMENT_KEY_TYPE.AES192, management_key=bytes.fromhex(pin)
+        key_type=MANAGEMENT_KEY_TYPE.AES256, management_key=bytes.fromhex(pin)
     )
 
     # Put the key and certificate
