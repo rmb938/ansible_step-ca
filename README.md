@@ -117,11 +117,11 @@ Need 3 yubikeys total, 2 for the roots (one as a backup) and one for the interme
     ```bash
     sudo apt install opensc yubikey-manager pwgen ykcs11 pkcs11-provider python3-pykcs11 python3-click
     ```
-1. Copy the `generate-root.py` and `generate-intermediate.py` scripts to the server
+1. Copy the scripts to the server
     ```bash
-    scp generate-root.py ubuntu@step-ca.us-homelab1.hl.rmb938.me:/home/ubuntu/
-    scp generate-intermediate.py ubuntu@step-ca.us-homelab1.hl.rmb938.me:/home/ubuntu/
-    scp generate-pin.py ubuntu@step-ca.us-homelab1.hl.rmb938.me:/home/ubuntu/
+    ansible -i hosts all -u ubuntu -m copy -a 'src=generate-root.py dest=~/generate-root.py mode=0755'
+    ansible -i hosts all -u ubuntu -m copy -a 'src=generate-intermediate.py dest=~/generate-intermediate.py mode=0755'
+    ansible -i hosts all -u ubuntu -m copy -a 'src=generate-pin.py dest=~/generate-pin.py mode=0755'
     ```
 
 ##### Root Certificate
