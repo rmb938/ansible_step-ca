@@ -37,11 +37,41 @@
   changed_when: false
   when: smallstep_certificates_git.changed
 
+- name: Create step user
+  ansible.builtin.user:
+    name: step
+    home: /etc/step-ca
+    create_home: false
+    shell: /bin/false
+    system: true
+
+- name: Set permissions on step home
+  ansible.builtin.file:
+    path: /etc/step-ca
+    owner: step
+    group: step
+    recurse: true
+
 - name: Allow binding to 443
   community.general.capabilities:
     path: /usr/local/bin/step-ca
     capability: cap_net_bind_service=eip
     state: present
+
+- name: Allow yubikey access for step user
+  ansible.builtin.template:
+    src: etc/polkit-1/rules.d/67-step-yubikey.rules
+    dest: /etc/polkit-1/rules.d/67-step-yubikey.rules
+    mode: "0640"
+    owner: polkitd
+    group: polkitd
+  register: step_yukikey_polkit_rule_template
+
+- name: Restart polkit # noqa: no-handler
+  ansible.builtin.systemd_service:
+    name: polkit.service
+    state: restarted
+  when: step_yukikey_polkit_rule_template.changed
 
 - name: Create db dir
   ansible.builtin.file:

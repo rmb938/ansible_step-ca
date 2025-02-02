@@ -151,12 +151,6 @@ Need 3 yubikeys total, 2 for the roots (one as a backup) and one for the interme
 
 ##### Intermediate Certificate
 
-1. Create `step` user and home directory
-    ```bash
-    sudo useradd --user-group --system --home /etc/step-ca --shell /bin/false step
-    sudo mkdir -p /etc/step-ca
-    sudo chown -R step:step /etc/step-ca
-    ```
 1. Insert the intermediate Yubikey
     1. Change the management, user, and PUK PINs, store them on the filesystem for Step CA
         ```bash
@@ -189,7 +183,7 @@ If your root Yubikey is lost, consider your PKI compromised, you'll need to secu
 
 If your root Yubikey is corrupted you cannot copy your keys from your backup to another Yubikey due to how they work. If you are using a HSM you may be able to clone it.
 
-You will want to generate a new Root and intermediate then cross-sign the new intermediate with your old Root. Then deploy the cross-signed intermediate to your PKI infra 
+You will want to generate a new Root and intermediate and cross-sign the new intermediate with your old Root. Then deploy the cross-signed intermediate to your PKI infra 
 until you can distribute the new Root public keys to all users. Once the new Root is distributed, update your PKI infra to use the non-cross signed intermediate.
 
 TODO: create guide for cross signing, updating step-ca, ect...

@@ -12,10 +12,8 @@ ConditionFileNotEmpty=/etc/step-ca/config/ca.json
 
 [Service]
 Type=simple
-; User=step
-; Group=step
-User=root
-Group=root
+User=step
+Group=step
 Environment=STEPPATH=/etc/step-ca
 WorkingDirectory=/etc/step-ca
 ExecStart=/usr/local/bin/step-ca config/ca.json

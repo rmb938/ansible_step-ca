@@ -1,0 +1,15 @@
+/* {{ ansible_managed }} */
+/* Allow step user to use yubikey */
+
+polkit.addRule(function(action, subject) {
+        if (action.id == "org.debian.pcsc-lite.access_card" &&
+                subject.user == "step") {
+                return polkit.Result.YES;
+        }
+});
+polkit.addRule(function(action, subject) {
+        if (action.id == "org.debian.pcsc-lite.access_pcsc" &&
+                subject.user == "step") {
+                return polkit.Result.YES;
+        }
+});
