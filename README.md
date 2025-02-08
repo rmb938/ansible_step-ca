@@ -177,6 +177,13 @@ TODO: create guide for cross signing, updating step-ca, ect...
 If your intermediate is lost or corrupted simply following [Intermediate Certificate](#intermediate-certificate) steps to generate a new intermediate and rerun this ansible.
 
 You will also want to update your CRL to revoke the current intermediate if it was lost.
-    ```bash
-    TODO:
-    ```
+
+```bash
+TODO:
+```
+
+## Run
+
+```
+ansible-playbook -i hosts site.yaml -v --diff
+```

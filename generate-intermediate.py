@@ -311,11 +311,23 @@ def main():
     )
 
     yubikey, serials = next_yubikey(serials)
+    piv = PivSession(yubikey.smart_card())
 
     # Unlock with the management key
-    intermediate_management_pin = click.prompt(
-        "Enter management key", default=DEFAULT_MANAGEMENT_KEY.hex(), hide_input=True
-    )
+    while True:
+        try:
+            intermediate_management_pin = click.prompt(
+                "Enter management key",
+                default=DEFAULT_MANAGEMENT_KEY.hex(),
+                hide_input=True,
+            )
+            piv.authenticate(
+                key_type=MANAGEMENT_KEY_TYPE.AES256,
+                management_key=bytes.fromhex(intermediate_management_pin),
+            )
+            break
+        except (ApduError, ValueError):
+            print("Invalid Management Key, try again.")
     write_keys(
         yubikey,
         ybi_key.certificate,

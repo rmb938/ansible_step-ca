@@ -124,22 +124,48 @@ def main():
     # Connect to yubikey
     print("Connecting to Yubikey")
     yubikey = s.single()
+    piv = PivSession(yubikey.smart_card())
     serials = [yubikey.info.serial]
     print(f"Connected to Yubikey with Serial {yubikey.info.serial}")
 
     # Unlock with the management key
-    root_management_pin = click.prompt(
-        "Enter management key", default=DEFAULT_MANAGEMENT_KEY.hex(), hide_input=True
-    )
+    while True:
+        try:
+            root_management_pin = click.prompt(
+                "Enter management key",
+                default=DEFAULT_MANAGEMENT_KEY.hex(),
+                hide_input=True,
+            )
+            piv.authenticate(
+                key_type=MANAGEMENT_KEY_TYPE.AES256,
+                management_key=bytes.fromhex(root_management_pin),
+            )
+            break
+        except (ApduError, ValueError):
+            print("Invalid Management Key, try again.")
+
     write_keys(yubikey, root_certificate, root_private_key, root_management_pin)
 
     print("Backing up root to another Yubikey")
     yubikey, serials = next_yubikey(serials)
+    piv = PivSession(yubikey.smart_card())
 
     # Unlock with the management key
-    root_management_pin = click.prompt(
-        "Enter management key", default=DEFAULT_MANAGEMENT_KEY.hex(), hide_input=True
-    )
+    while True:
+        try:
+            root_management_pin = click.prompt(
+                "Enter management key",
+                default=DEFAULT_MANAGEMENT_KEY.hex(),
+                hide_input=True,
+            )
+            piv.authenticate(
+                key_type=MANAGEMENT_KEY_TYPE.AES256,
+                management_key=bytes.fromhex(root_management_pin),
+            )
+            break
+        except (ApduError, ValueError):
+            print("Invalid Management Key, try again.")
+
     write_keys(yubikey, root_certificate, root_private_key, root_management_pin)
 
 
