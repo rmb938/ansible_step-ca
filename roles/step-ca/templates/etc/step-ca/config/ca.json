@@ -49,7 +49,8 @@
             "*.us-homelab1.hl.rmb938.me",
             "*.tailnet-047c.ts.net"
           ]
-        }
+        },
+        "allowWildcardNames": true
       }
     },
     "provisioners": [

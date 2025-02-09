@@ -35,6 +35,7 @@
             allow:
               dns:
                 - "*.haproxy.us-homelab1.hl.rmb938.me"
+            allowWildcardNames: true
         provisioner:
           type: x5c
           name: x5c
