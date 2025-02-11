@@ -47,7 +47,8 @@
           "dns": [
             "*.rmb938.me",
             "*.us-homelab1.hl.rmb938.me",
-            "*.tailnet-047c.ts.net"
+            "*.tailnet-047c.ts.net",
+            "*.haproxy.us-homelab1.hl.rmb938.me"
           ]
         },
         "allowWildcardNames": true
