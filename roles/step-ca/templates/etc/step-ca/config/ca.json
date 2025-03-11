@@ -1,5 +1,5 @@
 {
-  "ansible_managed": {{ ansible_managed }},
+  "ansible_managed": "{{ ansible_managed }}",
   "root": "/usr/local/share/ca-certificates/step-ca-homelab.crt",
   "crt": "/etc/step-ca/intermediate.crt",
   "key": "pkcs11:id=05",
